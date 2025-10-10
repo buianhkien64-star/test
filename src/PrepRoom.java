@@ -11,6 +11,8 @@ public class PrepRoom {
     private Player player;
     private Door door;
     private RestartArea restartArea;
+    private CharacterSprite robotSprite;
+    private CharacterSprite marineSprite;
     private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
 
     public void initEntities(Properties gameProperties) {
@@ -33,10 +35,18 @@ public class PrepRoom {
                 }
             }
         }
+
+        // Initialize character selection sprites
+        robotSprite = new CharacterSprite(IOUtils.parseCoords(gameProperties.getProperty("Robot")), "res/robot_sprite.png");
+        marineSprite = new CharacterSprite(IOUtils.parseCoords(gameProperties.getProperty("Marine")), "res/marine_sprite.png");
     }
 
     public void update(Input input) {
         UserInterface.drawStartMessages();
+
+        // Draw character selection sprites
+        robotSprite.draw();
+        marineSprite.draw();
 
         // update and draw all game objects in this room
         door.update(player);

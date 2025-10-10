@@ -2,16 +2,20 @@ import bagel.Image;
 import bagel.util.Point;
 
 /**
- * Enemy that gets removed when the player overlaps with it
+ * Enemy that moves along a predefined path and gets removed when the player overlaps with it
  */
 public class KeyBulletKin {
-    private final Point position;
+    private Point position;
     private final Image image;
     private boolean active = false; // only true when the Battle Room has been activated
     private boolean dead = false;
-    
-    public KeyBulletKin(Point startPos) {
-        this.position = startPos;
+
+    public KeyBulletKin(String pathString) {
+        // Parse the first coordinate as the starting position
+        String[] pathPoints = pathString.split(";");
+        if (pathPoints.length > 0) {
+            this.position = IOUtils.parseCoords(pathPoints[0]);
+        }
         this.image = new Image("res/key_bullet_kin.png");
     }
 

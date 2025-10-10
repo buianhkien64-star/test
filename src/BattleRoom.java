@@ -44,34 +44,38 @@ public class BattleRoom {
                 }
 
                 String[] coordinates;
-                for (String coords: propertyValue.split(";")) {
-                    switch (objectType) {
-                        case "primarydoor":
-                            coordinates = propertyValue.split(",");
-                            primaryDoor = new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this);
-                            break;
-                        case "secondarydoor":
-                            coordinates = propertyValue.split(",");
-                            secondaryDoor = new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this);
-                            break;
-                        case "keyBulletKin":
-                            keyBulletKin = new KeyBulletKin(IOUtils.parseCoords(propertyValue));
-                            break;
-                        case "wall":
+                switch (objectType) {
+                    case "primarydoor":
+                        coordinates = propertyValue.split(",");
+                        primaryDoor = new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this);
+                        break;
+                    case "secondarydoor":
+                        coordinates = propertyValue.split(",");
+                        secondaryDoor = new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this);
+                        break;
+                    case "keyBulletKin":
+                        keyBulletKin = new KeyBulletKin(propertyValue);
+                        break;
+                    case "wall":
+                        for (String coords: propertyValue.split(";")) {
                             Wall wall = new Wall(IOUtils.parseCoords(coords));
                             walls.add(wall);
-                            break;
-                        case "treasurebox":
+                        }
+                        break;
+                    case "treasurebox":
+                        for (String coords: propertyValue.split(";")) {
                             TreasureBox treasureBox = new TreasureBox(IOUtils.parseCoords(coords),
                                     Double.parseDouble(coords.split(",")[2]));
                             treasureBoxes.add(treasureBox);
-                            break;
-                        case "river":
+                        }
+                        break;
+                    case "river":
+                        for (String coords: propertyValue.split(";")) {
                             River river = new River(IOUtils.parseCoords(coords));
                             rivers.add(river);
-                            break;
-                        default:
-                    }
+                        }
+                        break;
+                    default:
                 }
             }
         }
