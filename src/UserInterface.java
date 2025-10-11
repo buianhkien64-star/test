@@ -17,6 +17,22 @@ public class UserInterface {
     public static void drawStartMessages() {
         drawTextCentered("title", Integer.parseInt(ShadowDungeon.getGameProps().getProperty("title.fontSize")), Double.parseDouble(ShadowDungeon.getGameProps().getProperty("title.y")));
         drawTextCentered("moveMessage", Integer.parseInt(ShadowDungeon.getGameProps().getProperty("prompt.fontSize")), Double.parseDouble(ShadowDungeon.getGameProps().getProperty("moveMessage.y")));
+        drawTextCentered("selectMessage", Integer.parseInt(ShadowDungeon.getGameProps().getProperty("prompt.fontSize")), Double.parseDouble(ShadowDungeon.getGameProps().getProperty("selectMessage.y")));
+    }
+
+    public static void drawCharacterDescriptions() {
+        int fontSize = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("prompt.fontSize"));
+        Font font = new Font("res/wheaton.otf", fontSize);
+
+        // Draw Robot description
+        String robotDesc = ShadowDungeon.getMessageProps().getProperty("robotDescription");
+        Point robotPos = IOUtils.parseCoords(ShadowDungeon.getGameProps().getProperty("robotMessage"));
+        font.drawString(robotDesc, robotPos.x, robotPos.y);
+
+        // Draw Marine description
+        String marineDesc = ShadowDungeon.getMessageProps().getProperty("marineDescription");
+        Point marinePos = IOUtils.parseCoords(ShadowDungeon.getGameProps().getProperty("marineMessage"));
+        font.drawString(marineDesc, marinePos.x, marinePos.y);
     }
 
     public static void drawEndMessage(boolean win) {

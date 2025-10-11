@@ -13,13 +13,23 @@ public class Player {
     private double speed;
     private double coins = 0;
     private boolean faceLeft = false;
+    private PlayerType playerType = PlayerType.DEFAULT;
 
-    private static final Image RIGHT_IMAGE = new Image("res/player_right.png");
-    private static final Image LEFT_IMAGE = new Image("res/player_left.png");
+    // Default player images
+    private static final Image DEFAULT_RIGHT = new Image("res/player_right.png");
+    private static final Image DEFAULT_LEFT = new Image("res/player_left.png");
+
+    // Robot images
+    private static final Image ROBOT_RIGHT = new Image("res/robot_right.png");
+    private static final Image ROBOT_LEFT = new Image("res/robot_left.png");
+
+    // Marine images
+    private static final Image MARINE_RIGHT = new Image("res/marine_right.png");
+    private static final Image MARINE_LEFT = new Image("res/marine_left.png");
 
     public Player(Point position) {
         this.position = position;
-        this.currImage = RIGHT_IMAGE;
+        this.currImage = DEFAULT_RIGHT;
         this.speed = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("movingSpeed"));
         this.health = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("initialHealth"));
     }
@@ -59,9 +69,27 @@ public class Player {
     }
 
     public void draw() {
-        currImage = faceLeft ? LEFT_IMAGE : RIGHT_IMAGE; // NOTE: this is an example of using the ternary operator
+        // Select the correct image based on player type and facing direction
+        switch (playerType) {
+            case ROBOT:
+                currImage = faceLeft ? ROBOT_LEFT : ROBOT_RIGHT;
+                break;
+            case MARINE:
+                currImage = faceLeft ? MARINE_LEFT : MARINE_RIGHT;
+                break;
+            default:
+                currImage = faceLeft ? DEFAULT_LEFT : DEFAULT_RIGHT;
+        }
         currImage.draw(position.x, position.y);
         UserInterface.drawStats(health, coins);
+    }
+
+    public void setPlayerType(PlayerType type) {
+        this.playerType = type;
+    }
+
+    public PlayerType getPlayerType() {
+        return playerType;
     }
 
     public void earnCoins(double coins) {

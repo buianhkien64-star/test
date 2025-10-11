@@ -43,6 +43,7 @@ public class PrepRoom {
 
     public void update(Input input) {
         UserInterface.drawStartMessages();
+        UserInterface.drawCharacterDescriptions();
 
         // Draw character selection sprites
         robotSprite.draw();
@@ -59,13 +60,23 @@ public class PrepRoom {
         restartArea.draw();
 
         if (player != null) {
+            // Handle character selection
+            if (input.wasPressed(Keys.R)) {
+                player.setPlayerType(PlayerType.ROBOT);
+                // Unlock door after character selection
+                if (!findDoor().isUnlocked()) {
+                    findDoor().unlock(false);
+                }
+            } else if (input.wasPressed(Keys.M)) {
+                player.setPlayerType(PlayerType.MARINE);
+                // Unlock door after character selection
+                if (!findDoor().isUnlocked()) {
+                    findDoor().unlock(false);
+                }
+            }
+
             player.update(input);
             player.draw();
-        }
-
-        // door unlock mechanism
-        if (input.wasPressed(Keys.R) && !findDoor().isUnlocked()) {
-            findDoor().unlock(false);
         }
     }
 
