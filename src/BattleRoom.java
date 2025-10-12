@@ -157,6 +157,14 @@ public class BattleRoom {
                 }
             }
 
+            // Check collision with KeyBulletKin
+            if (bullet.isActive() && keyBulletKin.isActive()) {
+                if (bullet.getBoundingBox().intersects(keyBulletKin.getImage().getBoundingBoxAt(keyBulletKin.getPosition()))) {
+                    keyBulletKin.takeDamage(bullet.getDamage());
+                    bullet.setActive(false);
+                }
+            }
+
             if (!bullet.isActive()) {
                 bulletsToRemove.add(bullet);
             }

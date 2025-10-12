@@ -20,8 +20,11 @@ public class TreasureBox {
 
     public void update(Input input, Player player) {
         if (hasCollidedWith(player) && input.wasPressed(Keys.K)) {
-            player.earnCoins(coinValue);
-            active = false;
+            // Try to use a key to open the treasure box
+            if (player.useKey()) {
+                player.earnCoins(coinValue);
+                active = false;
+            }
         }
     }
 
