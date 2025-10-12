@@ -16,6 +16,7 @@ public class Player {
     private PlayerType playerType = PlayerType.DEFAULT;
     private WeaponLevel weaponLevel = WeaponLevel.STANDARD;
     private int framesSinceLastShot = 0;
+    private int keys = 0;
 
     // Default player images
     private static final Image DEFAULT_RIGHT = new Image("res/player_right.png");
@@ -110,7 +111,7 @@ public class Player {
                 currImage = faceLeft ? DEFAULT_LEFT : DEFAULT_RIGHT;
         }
         currImage.draw(position.x, position.y);
-        UserInterface.drawStats(health, coins);
+        UserInterface.drawStats(health, coins, weaponLevel.getLevel(), keys);
     }
 
     public void setPlayerType(PlayerType type) {
@@ -150,5 +151,21 @@ public class Player {
 
     public void upgradeWeapon() {
         weaponLevel = weaponLevel.getNextLevel();
+    }
+
+    public int getKeys() {
+        return keys;
+    }
+
+    public void addKey() {
+        keys++;
+    }
+
+    public boolean useKey() {
+        if (keys > 0) {
+            keys--;
+            return true;
+        }
+        return false;
     }
 }
