@@ -17,7 +17,10 @@ public class River{
 
     public void update(Player player) {
         if (hasCollidedWith(player)) {
-            player.receiveDamage(damagePerFrame);
+            // Marine is immune to river damage
+            if (player.getPlayerType() != PlayerType.MARINE) {
+                player.receiveDamage(damagePerFrame);
+            }
         }
     }
 
