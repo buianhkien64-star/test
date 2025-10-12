@@ -1,4 +1,5 @@
 import bagel.Input;
+import bagel.MouseButtons;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -16,6 +17,7 @@ public class BattleRoom {
     private ArrayList<Wall> walls;
     private ArrayList<River> rivers;
     private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
+    private ArrayList<Bullet> bullets;
     private boolean isComplete = false;
     private final String nextRoomName;
     private final String roomName;
@@ -25,6 +27,7 @@ public class BattleRoom {
         rivers = new ArrayList<>();
         treasureBoxes = new ArrayList<>();
         this.roomName = roomName;
+        bullets = new ArrayList<>();
         this.nextRoomName = nextRoomName;
     }
 
@@ -118,14 +121,48 @@ public class BattleRoom {
         }
 
         if (player != null) {
+            // Handle shooting
+            if (input.isDown(MouseButtons.LEFT)) {
+                Bullet newBullet = player.shoot(input.getMouseX(), input.getMouseY());
+                if (newBullet != null) {
+                    bullets.add(newBullet);
+                }
+            }
+
             player.update(input);
             player.draw();
         }
+
+        // Update and draw bullets
+        updateBullets();
 
         if (noMoreEnemies() && !isComplete()) {
             setComplete(true);
             unlockAllDoors();
         }
+    }
+
+    private void updateBullets() {
+        ArrayList<Bullet> bulletsToRemove = new ArrayList<>();
+
+        for (Bullet bullet : bullets) {
+            bullet.update();
+            bullet.draw();
+
+            // Check collision with walls
+            for (Wall wall : walls) {
+                if (bullet.isActive() && bullet.getBoundingBox().intersects(wall.getBoundingBox())) {
+                    bullet.setActive(false);
+                    break;
+                }
+            }
+
+            if (!bullet.isActive()) {
+                bulletsToRemove.add(bullet);
+            }
+        }
+
+        bullets.removeAll(bulletsToRemove);
     }
 
     private boolean stopUpdatingEarlyIfNeeded() {

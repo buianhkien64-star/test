@@ -27,4 +27,8 @@ public class Wall {
     public boolean hasCollidedWith(Player player) {
         return image.getBoundingBoxAt(position).intersects(player.getCurrImage().getBoundingBoxAt(player.getPosition()));
     }
+
+    public bagel.util.Rectangle getBoundingBox() {
+        return image.getBoundingBoxAt(position);
+    }
 }

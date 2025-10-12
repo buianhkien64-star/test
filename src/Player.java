@@ -14,6 +14,8 @@ public class Player {
     private double coins = 0;
     private boolean faceLeft = false;
     private PlayerType playerType = PlayerType.DEFAULT;
+    private WeaponLevel weaponLevel = WeaponLevel.STANDARD;
+    private int framesSinceLastShot = 0;
 
     // Default player images
     private static final Image DEFAULT_RIGHT = new Image("res/player_right.png");
@@ -61,6 +63,33 @@ public class Player {
         if (topLeft.x >= 0 && bottomRight.x <= Window.getWidth() && topLeft.y >= 0 && bottomRight.y <= Window.getHeight()) {
             move(currX, currY);
         }
+
+        // Increment shooting cooldown counter
+        framesSinceLastShot++;
+    }
+
+    /**
+     * Try to shoot a bullet towards the mouse position
+     * @param mouseX Mouse X coordinate
+     * @param mouseY Mouse Y coordinate
+     * @return Bullet object if shooting is successful, null if still on cooldown or no character selected
+     */
+    public Bullet shoot(double mouseX, double mouseY) {
+        // Can only shoot if a character is selected
+        if (playerType == PlayerType.DEFAULT) {
+            return null;
+        }
+
+        int bulletFreq = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("bulletFreq"));
+
+        // Check if enough frames have passed since last shot
+        if (framesSinceLastShot >= bulletFreq) {
+            framesSinceLastShot = 0;
+            Point targetPos = new Point(mouseX, mouseY);
+            return new Bullet(position, targetPos, weaponLevel.getDamage());
+        }
+
+        return null;
     }
     
     public void move(double x, double y) {
@@ -113,5 +142,13 @@ public class Player {
 
     public Point getPrevPosition() {
         return prevPosition;
+    }
+
+    public WeaponLevel getWeaponLevel() {
+        return weaponLevel;
+    }
+
+    public void upgradeWeapon() {
+        weaponLevel = weaponLevel.getNextLevel();
     }
 }
