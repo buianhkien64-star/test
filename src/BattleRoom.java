@@ -13,6 +13,8 @@ public class BattleRoom {
     private Door primaryDoor;
     private Door secondaryDoor;
     private KeyBulletKin keyBulletKin;
+    private ArrayList<BulletKin> bulletKins;
+    private ArrayList<AshenBulletKin> ashenBulletKins;
     private ArrayList<TreasureBox> treasureBoxes;
     private ArrayList<Wall> walls;
     private ArrayList<River> rivers;
@@ -20,6 +22,7 @@ public class BattleRoom {
     private ArrayList<Basket> baskets;
     private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
     private ArrayList<Bullet> bullets;
+    private ArrayList<Fireball> fireballs;
     private ArrayList<Key> keys;
     private boolean isComplete = false;
     private final String nextRoomName;
@@ -30,9 +33,12 @@ public class BattleRoom {
         rivers = new ArrayList<>();
         treasureBoxes = new ArrayList<>();
         bullets = new ArrayList<>();
+        fireballs = new ArrayList<>();
         keys = new ArrayList<>();
         tables = new ArrayList<>();
         baskets = new ArrayList<>();
+        bulletKins = new ArrayList<>();
+        ashenBulletKins = new ArrayList<>();
         this.roomName = roomName;
         this.nextRoomName = nextRoomName;
     }
@@ -96,6 +102,18 @@ public class BattleRoom {
                             baskets.add(basket);
                         }
                         break;
+                    case "bulletKin":
+                        for (String coords: propertyValue.split(";")) {
+                            BulletKin bulletKin = new BulletKin(IOUtils.parseCoords(coords));
+                            bulletKins.add(bulletKin);
+                        }
+                        break;
+                    case "ashenBulletKin":
+                        for (String coords: propertyValue.split(";")) {
+                            AshenBulletKin ashenBulletKin = new AshenBulletKin(IOUtils.parseCoords(coords));
+                            ashenBulletKins.add(ashenBulletKin);
+                        }
+                        break;
                     default:
                 }
             }
@@ -124,6 +142,34 @@ public class BattleRoom {
             Key droppedKey = new Key(keyBulletKin.getPosition());
             keys.add(droppedKey);
             keyBulletKin.setKeyDropped();
+        }
+
+        // Update and draw BulletKins
+        for (BulletKin bulletKin : bulletKins) {
+            if (bulletKin.isActive()) {
+                bulletKin.update(player);
+                bulletKin.draw();
+
+                // Try to shoot fireballs
+                Fireball newFireball = bulletKin.shoot(player);
+                if (newFireball != null) {
+                    fireballs.add(newFireball);
+                }
+            }
+        }
+
+        // Update and draw AshenBulletKins
+        for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
+            if (ashenBulletKin.isActive()) {
+                ashenBulletKin.update(player);
+                ashenBulletKin.draw();
+
+                // Try to shoot fireballs
+                Fireball newFireball = ashenBulletKin.shoot(player);
+                if (newFireball != null) {
+                    fireballs.add(newFireball);
+                }
+            }
         }
 
         // Update and draw keys
@@ -174,6 +220,9 @@ public class BattleRoom {
 
         // Update and draw bullets
         updateBullets();
+
+        // Update and draw fireballs
+        updateFireballs();
 
         if (noMoreEnemies() && !isComplete()) {
             setComplete(true);
@@ -229,12 +278,68 @@ public class BattleRoom {
                 }
             }
 
+            // Check collision with BulletKins
+            for (BulletKin bulletKin : bulletKins) {
+                if (bullet.isActive() && bulletKin.isActive() && bullet.getBoundingBox().intersects(bulletKin.getImage().getBoundingBoxAt(bulletKin.getPosition()))) {
+                    bulletKin.takeDamage(bullet.getDamage());
+                    bullet.setActive(false);
+                    break;
+                }
+            }
+
+            // Check collision with AshenBulletKins
+            for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
+                if (bullet.isActive() && ashenBulletKin.isActive() && bullet.getBoundingBox().intersects(ashenBulletKin.getImage().getBoundingBoxAt(ashenBulletKin.getPosition()))) {
+                    ashenBulletKin.takeDamage(bullet.getDamage());
+                    bullet.setActive(false);
+                    break;
+                }
+            }
+
             if (!bullet.isActive()) {
                 bulletsToRemove.add(bullet);
             }
         }
 
         bullets.removeAll(bulletsToRemove);
+    }
+
+    private void updateFireballs() {
+        ArrayList<Fireball> fireballsToRemove = new ArrayList<>();
+
+        for (Fireball fireball : fireballs) {
+            fireball.update();
+            fireball.draw();
+
+            // Check collision with walls
+            for (Wall wall : walls) {
+                if (fireball.isActive() && fireball.getBoundingBox().intersects(wall.getBoundingBox())) {
+                    fireball.setActive(false);
+                    break;
+                }
+            }
+
+            // Check collision with tables
+            for (Table table : tables) {
+                if (fireball.isActive() && !table.isDestroyed() && fireball.getBoundingBox().intersects(table.getBoundingBox())) {
+                    table.destroy();
+                    fireball.setActive(false);
+                    break;
+                }
+            }
+
+            // Check collision with player
+            if (fireball.isActive() && player != null && fireball.getBoundingBox().intersects(player.getCurrImage().getBoundingBoxAt(player.getPosition()))) {
+                player.receiveDamage(fireball.getDamage());
+                fireball.setActive(false);
+            }
+
+            if (!fireball.isActive()) {
+                fireballsToRemove.add(fireball);
+            }
+        }
+
+        fireballs.removeAll(fireballsToRemove);
     }
 
     private boolean stopUpdatingEarlyIfNeeded() {
@@ -277,9 +382,31 @@ public class BattleRoom {
 
     public void activateEnemies() {
         keyBulletKin.setActive(true);
+        for (BulletKin bulletKin : bulletKins) {
+            bulletKin.setActive(true);
+        }
+        for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
+            ashenBulletKin.setActive(true);
+        }
     }
 
     public boolean noMoreEnemies() {
-        return keyBulletKin.isDead();
+        boolean allBulletKinsDead = true;
+        for (BulletKin bulletKin : bulletKins) {
+            if (!bulletKin.isDead()) {
+                allBulletKinsDead = false;
+                break;
+            }
+        }
+
+        boolean allAshenBulletKinsDead = true;
+        for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
+            if (!ashenBulletKin.isDead()) {
+                allAshenBulletKinsDead = false;
+                break;
+            }
+        }
+
+        return keyBulletKin.isDead() && allBulletKinsDead && allAshenBulletKinsDead;
     }
 }
