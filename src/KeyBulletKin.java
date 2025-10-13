@@ -14,6 +14,7 @@ public class KeyBulletKin {
     private final ArrayList<Point> movementPath;
     private int currentTargetIndex = 1; // Start moving towards the second point
     private final double speed;
+    private boolean keyDropped = false;
 
     public KeyBulletKin(String pathString) {
         this.image = new Image("res/key_bullet_kin.png");
@@ -107,5 +108,13 @@ public class KeyBulletKin {
 
     public int getHealth() {
         return health;
+    }
+
+    public boolean hasDroppedKey() {
+        return keyDropped;
+    }
+
+    public void setKeyDropped() {
+        keyDropped = true;
     }
 }

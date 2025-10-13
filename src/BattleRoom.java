@@ -18,6 +18,7 @@ public class BattleRoom {
     private ArrayList<River> rivers;
     private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
     private ArrayList<Bullet> bullets;
+    private ArrayList<Key> keys;
     private boolean isComplete = false;
     private final String nextRoomName;
     private final String roomName;
@@ -26,8 +27,9 @@ public class BattleRoom {
         walls = new ArrayList<>();
         rivers = new ArrayList<>();
         treasureBoxes = new ArrayList<>();
-        this.roomName = roomName;
         bullets = new ArrayList<>();
+        keys = new ArrayList<>();
+        this.roomName = roomName;
         this.nextRoomName = nextRoomName;
     }
 
@@ -101,6 +103,17 @@ public class BattleRoom {
         if (keyBulletKin.isActive()) {
             keyBulletKin.update(player);
             keyBulletKin.draw();
+        } else if (keyBulletKin.isDead() && !keyBulletKin.hasDroppedKey()) {
+            // Drop key when KeyBulletKin dies
+            Key droppedKey = new Key(keyBulletKin.getPosition());
+            keys.add(droppedKey);
+            keyBulletKin.setKeyDropped();
+        }
+
+        // Update and draw keys
+        for (Key key : keys) {
+            key.update(player);
+            key.draw();
         }
 
         for (Wall wall: walls) {
