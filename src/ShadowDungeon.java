@@ -18,6 +18,7 @@ public class ShadowDungeon extends AbstractGame {
     private static BattleRoom battleRoomB;
     private static EndRoom endRoom;
     private static Player player;
+    private static Store store;
     private final Image background;
     
     public static final String PREP_ROOM_NAME = "prep";
@@ -53,6 +54,7 @@ public class ShadowDungeon extends AbstractGame {
         currRoomName = PREP_ROOM_NAME;
 
         ShadowDungeon.player = new Player(IOUtils.parseCoords(gameProps.getProperty("player.start")));
+        ShadowDungeon.store = new Store();
         prepRoom.setPlayer(player);
     }
 
@@ -186,6 +188,10 @@ public class ShadowDungeon extends AbstractGame {
     }
     public static Properties getMessageProps() {
         return messageProps;
+    }
+
+    public static Store getStore() {
+        return store;
     }
 
     public static void main(String[] args) {

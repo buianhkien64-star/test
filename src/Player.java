@@ -168,4 +168,16 @@ public class Player {
         }
         return false;
     }
+
+    public double getCoins() {
+        return coins;
+    }
+
+    public void spendCoins(int amount) {
+        coins -= amount;
+    }
+
+    public void addHealth(double amount) {
+        health += amount;
+    }
 }

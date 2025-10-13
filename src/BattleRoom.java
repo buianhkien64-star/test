@@ -179,6 +179,13 @@ public class BattleRoom {
             setComplete(true);
             unlockAllDoors();
         }
+
+        // Update and draw store
+        Store store = ShadowDungeon.getStore();
+        if (store != null) {
+            store.update(input, player);
+            store.draw();
+        }
     }
 
     private void updateBullets() {
