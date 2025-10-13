@@ -16,6 +16,8 @@ public class BattleRoom {
     private ArrayList<TreasureBox> treasureBoxes;
     private ArrayList<Wall> walls;
     private ArrayList<River> rivers;
+    private ArrayList<Table> tables;
+    private ArrayList<Basket> baskets;
     private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
     private ArrayList<Bullet> bullets;
     private ArrayList<Key> keys;
@@ -29,6 +31,8 @@ public class BattleRoom {
         treasureBoxes = new ArrayList<>();
         bullets = new ArrayList<>();
         keys = new ArrayList<>();
+        tables = new ArrayList<>();
+        baskets = new ArrayList<>();
         this.roomName = roomName;
         this.nextRoomName = nextRoomName;
     }
@@ -80,6 +84,18 @@ public class BattleRoom {
                             rivers.add(river);
                         }
                         break;
+                    case "table":
+                        for (String coords: propertyValue.split(";")) {
+                            Table table = new Table(IOUtils.parseCoords(coords));
+                            tables.add(table);
+                        }
+                        break;
+                    case "basket":
+                        for (String coords: propertyValue.split(";")) {
+                            Basket basket = new Basket(IOUtils.parseCoords(coords));
+                            baskets.add(basket);
+                        }
+                        break;
                     default:
                 }
             }
@@ -124,6 +140,16 @@ public class BattleRoom {
         for (River river: rivers) {
             river.update(player);
             river.draw();
+        }
+
+        for (Table table : tables) {
+            table.update(player);
+            table.draw();
+        }
+
+        for (Basket basket : baskets) {
+            basket.update(player);
+            basket.draw();
         }
 
         for (TreasureBox treasureBox: treasureBoxes) {
@@ -175,6 +201,24 @@ public class BattleRoom {
                 if (bullet.getBoundingBox().intersects(keyBulletKin.getImage().getBoundingBoxAt(keyBulletKin.getPosition()))) {
                     keyBulletKin.takeDamage(bullet.getDamage());
                     bullet.setActive(false);
+                }
+            }
+
+            // Check collision with tables
+            for (Table table : tables) {
+                if (bullet.isActive() && !table.isDestroyed() && bullet.getBoundingBox().intersects(table.getBoundingBox())) {
+                    table.destroy();
+                    bullet.setActive(false);
+                    break;
+                }
+            }
+
+            // Check collision with baskets
+            for (Basket basket : baskets) {
+                if (bullet.isActive() && !basket.isDestroyed() && bullet.getBoundingBox().intersects(basket.getBoundingBox())) {
+                    basket.destroy(player);
+                    bullet.setActive(false);
+                    break;
                 }
             }
 
