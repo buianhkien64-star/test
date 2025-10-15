@@ -281,7 +281,19 @@ public class BattleRoom {
             // Check collision with BulletKins
             for (BulletKin bulletKin : bulletKins) {
                 if (bullet.isActive() && bulletKin.isActive() && bullet.getBoundingBox().intersects(bulletKin.getImage().getBoundingBoxAt(bulletKin.getPosition()))) {
+                    boolean wasAlive = !bulletKin.isDead();
                     bulletKin.takeDamage(bullet.getDamage());
+
+                    // Award coins if enemy was just killed
+                    if (wasAlive && bulletKin.isDead() && player != null) {
+                        int coins = bulletKin.getCoinValue();
+                        // Robot gets bonus coins
+                        if (player.getPlayerType() == PlayerType.ROBOT) {
+                            coins += 5;
+                        }
+                        player.earnCoins(coins);
+                    }
+
                     bullet.setActive(false);
                     break;
                 }
@@ -290,7 +302,19 @@ public class BattleRoom {
             // Check collision with AshenBulletKins
             for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
                 if (bullet.isActive() && ashenBulletKin.isActive() && bullet.getBoundingBox().intersects(ashenBulletKin.getImage().getBoundingBoxAt(ashenBulletKin.getPosition()))) {
+                    boolean wasAlive = !ashenBulletKin.isDead();
                     ashenBulletKin.takeDamage(bullet.getDamage());
+
+                    // Award coins if enemy was just killed
+                    if (wasAlive && ashenBulletKin.isDead() && player != null) {
+                        int coins = ashenBulletKin.getCoinValue();
+                        // Robot gets bonus coins
+                        if (player.getPlayerType() == PlayerType.ROBOT) {
+                            coins += 5;
+                        }
+                        player.earnCoins(coins);
+                    }
+
                     bullet.setActive(false);
                     break;
                 }
