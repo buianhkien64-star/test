@@ -17,9 +17,9 @@ public class Store {
     public Store() {
         this.storeImage = new Image("res/store.png");
         this.position = IOUtils.parseCoords(ShadowDungeon.getGameProps().getProperty("store"));
-        this.healthCost = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("healthPurchase"));
-        this.healthBonus = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("healthBonus"));
-        this.weaponCost = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("weaponPurchase"));
+        this.healthCost = GameConstants.HEALTH_PURCHASE;
+        this.healthBonus = GameConstants.HEALTH_BONUS;
+        this.weaponCost = GameConstants.WEAPON_PURCHASE;
     }
 
     public void update(Input input, Player player) {

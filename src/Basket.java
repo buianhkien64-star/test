@@ -14,7 +14,7 @@ public class Basket {
     public Basket(Point position) {
         this.position = position;
         this.image = new Image("res/basket.png");
-        this.coinValue = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("basketCoin"));
+        this.coinValue = GameConstants.BASKET_COIN;
     }
 
     public void update(Player player) {

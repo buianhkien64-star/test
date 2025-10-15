@@ -6,54 +6,43 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Room with doors that are locked until the plaer defeats all enemies
+ * Room with doors that are locked until the player defeats all enemies
  */
-public class BattleRoom {
-    private Player player;
-    private Door primaryDoor;
-    private Door secondaryDoor;
-    private KeyBulletKin keyBulletKin;
-    private ArrayList<BulletKin> bulletKins;
-    private ArrayList<AshenBulletKin> ashenBulletKins;
-    private ArrayList<TreasureBox> treasureBoxes;
-    private ArrayList<Wall> walls;
-    private ArrayList<River> rivers;
-    private ArrayList<Table> tables;
-    private ArrayList<Basket> baskets;
-    private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
+public class BattleRoom extends GameRoom {
+    private ArrayList<Enemy> enemies;
     private ArrayList<Bullet> bullets;
     private ArrayList<Fireball> fireballs;
+    private ArrayList<TreasureBox> treasureBoxes;
+    private ArrayList<Table> tables;
+    private ArrayList<Basket> baskets;
     private ArrayList<Key> keys;
     private boolean isComplete = false;
     private final String nextRoomName;
-    private final String roomName;
 
     public BattleRoom(String roomName, String nextRoomName) {
-        walls = new ArrayList<>();
-        rivers = new ArrayList<>();
-        treasureBoxes = new ArrayList<>();
-        bullets = new ArrayList<>();
-        fireballs = new ArrayList<>();
-        keys = new ArrayList<>();
-        tables = new ArrayList<>();
-        baskets = new ArrayList<>();
-        bulletKins = new ArrayList<>();
-        ashenBulletKins = new ArrayList<>();
-        this.roomName = roomName;
+        super(roomName);
         this.nextRoomName = nextRoomName;
+        this.enemies = new ArrayList<>();
+        this.bullets = new ArrayList<>();
+        this.fireballs = new ArrayList<>();
+        this.treasureBoxes = new ArrayList<>();
+        this.tables = new ArrayList<>();
+        this.baskets = new ArrayList<>();
+        this.keys = new ArrayList<>();
     }
 
+    @Override
     public void initEntities(Properties gameProperties) {
-        // find the configuration of game objects for this room
+        // Parse configuration for this room
         for (Map.Entry<Object, Object> entry: gameProperties.entrySet()) {
-            String roomSuffix = String.format(".%s", roomName);
+            String roomSuffix = String.format(".%s", roomId);
 
             if (entry.getKey().toString().contains(roomSuffix)) {
                 String objectType = entry.getKey().toString()
                         .substring(0, entry.getKey().toString().length() - roomSuffix.length());
                 String propertyValue = entry.getValue().toString();
 
-                // ignore if the value is 0
+                // Ignore if value is 0
                 if (propertyValue.equals("0")) {
                     continue;
                 }
@@ -62,19 +51,28 @@ public class BattleRoom {
                 switch (objectType) {
                     case "primarydoor":
                         coordinates = propertyValue.split(",");
-                        primaryDoor = new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this);
+                        doors.add(new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this));
                         break;
                     case "secondarydoor":
                         coordinates = propertyValue.split(",");
-                        secondaryDoor = new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this);
+                        doors.add(new Door(IOUtils.parseCoords(propertyValue), coordinates[2], this));
                         break;
                     case "keyBulletKin":
-                        keyBulletKin = new KeyBulletKin(propertyValue);
+                        enemies.add(new KeyBulletKin(propertyValue));
+                        break;
+                    case "bulletKin":
+                        for (String coords: propertyValue.split(";")) {
+                            enemies.add(new BulletKin(IOUtils.parseCoords(coords)));
+                        }
+                        break;
+                    case "ashenBulletKin":
+                        for (String coords: propertyValue.split(";")) {
+                            enemies.add(new AshenBulletKin(IOUtils.parseCoords(coords)));
+                        }
                         break;
                     case "wall":
                         for (String coords: propertyValue.split(";")) {
-                            Wall wall = new Wall(IOUtils.parseCoords(coords));
-                            walls.add(wall);
+                            walls.add(new Wall(IOUtils.parseCoords(coords)));
                         }
                         break;
                     case "treasurebox":
@@ -86,32 +84,17 @@ public class BattleRoom {
                         break;
                     case "river":
                         for (String coords: propertyValue.split(";")) {
-                            River river = new River(IOUtils.parseCoords(coords));
-                            rivers.add(river);
+                            rivers.add(new River(IOUtils.parseCoords(coords)));
                         }
                         break;
                     case "table":
                         for (String coords: propertyValue.split(";")) {
-                            Table table = new Table(IOUtils.parseCoords(coords));
-                            tables.add(table);
+                            tables.add(new Table(IOUtils.parseCoords(coords)));
                         }
                         break;
                     case "basket":
                         for (String coords: propertyValue.split(";")) {
-                            Basket basket = new Basket(IOUtils.parseCoords(coords));
-                            baskets.add(basket);
-                        }
-                        break;
-                    case "bulletKin":
-                        for (String coords: propertyValue.split(";")) {
-                            BulletKin bulletKin = new BulletKin(IOUtils.parseCoords(coords));
-                            bulletKins.add(bulletKin);
-                        }
-                        break;
-                    case "ashenBulletKin":
-                        for (String coords: propertyValue.split(";")) {
-                            AshenBulletKin ashenBulletKin = new AshenBulletKin(IOUtils.parseCoords(coords));
-                            ashenBulletKins.add(ashenBulletKin);
+                            baskets.add(new Basket(IOUtils.parseCoords(coords)));
                         }
                         break;
                     default:
@@ -120,54 +103,34 @@ public class BattleRoom {
         }
     }
 
+    @Override
     public void update(Input input) {
-        // update and draw all active game objects in this room
-        primaryDoor.update(player);
-        primaryDoor.draw();
-        if (stopUpdatingEarlyIfNeeded()) {
-            return;
-        }
-
-        secondaryDoor.update(player);
-        secondaryDoor.draw();
-        if (stopUpdatingEarlyIfNeeded()) {
-            return;
-        }
-
-        if (keyBulletKin.isActive()) {
-            keyBulletKin.update(player);
-            keyBulletKin.draw();
-        } else if (keyBulletKin.isDead() && !keyBulletKin.hasDroppedKey()) {
-            // Drop key when KeyBulletKin dies
-            Key droppedKey = new Key(keyBulletKin.getPosition());
-            keys.add(droppedKey);
-            keyBulletKin.setKeyDropped();
-        }
-
-        // Update and draw BulletKins
-        for (BulletKin bulletKin : bulletKins) {
-            if (bulletKin.isActive()) {
-                bulletKin.update(player);
-                bulletKin.draw();
-
-                // Try to shoot fireballs
-                Fireball newFireball = bulletKin.shoot(player);
-                if (newFireball != null) {
-                    fireballs.add(newFireball);
-                }
+        // Update and draw doors
+        for (Door door : doors) {
+            door.update(player);
+            door.draw();
+            if (stopUpdatingEarlyIfNeeded()) {
+                return;
             }
         }
 
-        // Update and draw AshenBulletKins
-        for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
-            if (ashenBulletKin.isActive()) {
-                ashenBulletKin.update(player);
-                ashenBulletKin.draw();
+        // Update and draw all enemies (polymorphic)
+        for (Enemy enemy : enemies) {
+            if (enemy.isActive() && !enemy.isDefeated()) {
+                enemy.update();
+                enemy.render();
 
-                // Try to shoot fireballs
-                Fireball newFireball = ashenBulletKin.shoot(player);
+                // Try to shoot fireballs (only for enemies that can shoot)
+                Fireball newFireball = enemy.shoot(player);
                 if (newFireball != null) {
                     fireballs.add(newFireball);
+                }
+            } else if (enemy.isDefeated() && enemy instanceof KeyBulletKin) {
+                // Drop key when KeyBulletKin is defeated
+                KeyBulletKin keyEnemy = (KeyBulletKin) enemy;
+                if (!keyEnemy.hasDroppedKey()) {
+                    keys.add(new Key(enemy.getPosition()));
+                    keyEnemy.setKeyDropped();
                 }
             }
         }
@@ -178,26 +141,31 @@ public class BattleRoom {
             key.draw();
         }
 
+        // Update and draw walls
         for (Wall wall: walls) {
             wall.update(player);
             wall.draw();
         }
 
+        // Update and draw rivers
         for (River river: rivers) {
             river.update(player);
             river.draw();
         }
 
+        // Update and draw tables
         for (Table table : tables) {
             table.update(player);
             table.draw();
         }
 
+        // Update and draw baskets
         for (Basket basket : baskets) {
             basket.update(player);
             basket.draw();
         }
 
+        // Update and draw treasure boxes
         for (TreasureBox treasureBox: treasureBoxes) {
             if (treasureBox.isActive()) {
                 treasureBox.update(input, player);
@@ -218,13 +186,14 @@ public class BattleRoom {
             player.draw();
         }
 
-        // Update and draw bullets
+        // Update bullets and check collisions
         updateBullets();
 
-        // Update and draw fireballs
+        // Update fireballs and check collisions
         updateFireballs();
 
-        if (noMoreEnemies() && !isComplete()) {
+        // Check if all enemies defeated
+        if (areAllEnemiesDefeated() && !isComplete()) {
             setComplete(true);
             unlockAllDoors();
         }
@@ -242,27 +211,40 @@ public class BattleRoom {
 
         for (Bullet bullet : bullets) {
             bullet.update();
-            bullet.draw();
+            bullet.render();
 
             // Check collision with walls
             for (Wall wall : walls) {
-                if (bullet.isActive() && bullet.getBoundingBox().intersects(wall.getBoundingBox())) {
+                if (bullet.isActive() && bullet.intersects(wall.getBoundingBox())) {
                     bullet.setActive(false);
                     break;
                 }
             }
 
-            // Check collision with KeyBulletKin
-            if (bullet.isActive() && keyBulletKin.isActive()) {
-                if (bullet.getBoundingBox().intersects(keyBulletKin.getImage().getBoundingBoxAt(keyBulletKin.getPosition()))) {
-                    keyBulletKin.takeDamage(bullet.getDamage());
+            // Check collision with all enemies (polymorphic)
+            for (Enemy enemy : enemies) {
+                if (bullet.isActive() && enemy.isActive() && !enemy.isDefeated() && bullet.intersects(enemy)) {
+                    boolean wasAlive = !enemy.isDefeated();
+                    enemy.takeDamage(bullet.getDamage());
+
+                    // Award coins if enemy was just killed
+                    if (wasAlive && enemy.isDefeated() && player != null) {
+                        int coins = enemy.getCoinReward();
+                        // Robot gets bonus coins
+                        if (player.getPlayerType() == PlayerType.ROBOT) {
+                            coins += 5;
+                        }
+                        player.earnCoins(coins);
+                    }
+
                     bullet.setActive(false);
+                    break;
                 }
             }
 
             // Check collision with tables
             for (Table table : tables) {
-                if (bullet.isActive() && !table.isDestroyed() && bullet.getBoundingBox().intersects(table.getBoundingBox())) {
+                if (bullet.isActive() && !table.isDestroyed() && bullet.intersects(table.getBoundingBox())) {
                     table.destroy();
                     bullet.setActive(false);
                     break;
@@ -271,50 +253,8 @@ public class BattleRoom {
 
             // Check collision with baskets
             for (Basket basket : baskets) {
-                if (bullet.isActive() && !basket.isDestroyed() && bullet.getBoundingBox().intersects(basket.getBoundingBox())) {
+                if (bullet.isActive() && !basket.isDestroyed() && bullet.intersects(basket.getBoundingBox())) {
                     basket.destroy(player);
-                    bullet.setActive(false);
-                    break;
-                }
-            }
-
-            // Check collision with BulletKins
-            for (BulletKin bulletKin : bulletKins) {
-                if (bullet.isActive() && bulletKin.isActive() && bullet.getBoundingBox().intersects(bulletKin.getImage().getBoundingBoxAt(bulletKin.getPosition()))) {
-                    boolean wasAlive = !bulletKin.isDead();
-                    bulletKin.takeDamage(bullet.getDamage());
-
-                    // Award coins if enemy was just killed
-                    if (wasAlive && bulletKin.isDead() && player != null) {
-                        int coins = bulletKin.getCoinValue();
-                        // Robot gets bonus coins
-                        if (player.getPlayerType() == PlayerType.ROBOT) {
-                            coins += 5;
-                        }
-                        player.earnCoins(coins);
-                    }
-
-                    bullet.setActive(false);
-                    break;
-                }
-            }
-
-            // Check collision with AshenBulletKins
-            for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
-                if (bullet.isActive() && ashenBulletKin.isActive() && bullet.getBoundingBox().intersects(ashenBulletKin.getImage().getBoundingBoxAt(ashenBulletKin.getPosition()))) {
-                    boolean wasAlive = !ashenBulletKin.isDead();
-                    ashenBulletKin.takeDamage(bullet.getDamage());
-
-                    // Award coins if enemy was just killed
-                    if (wasAlive && ashenBulletKin.isDead() && player != null) {
-                        int coins = ashenBulletKin.getCoinValue();
-                        // Robot gets bonus coins
-                        if (player.getPlayerType() == PlayerType.ROBOT) {
-                            coins += 5;
-                        }
-                        player.earnCoins(coins);
-                    }
-
                     bullet.setActive(false);
                     break;
                 }
@@ -333,11 +273,11 @@ public class BattleRoom {
 
         for (Fireball fireball : fireballs) {
             fireball.update();
-            fireball.draw();
+            fireball.render();
 
             // Check collision with walls
             for (Wall wall : walls) {
-                if (fireball.isActive() && fireball.getBoundingBox().intersects(wall.getBoundingBox())) {
+                if (fireball.isActive() && fireball.intersects(wall.getBoundingBox())) {
                     fireball.setActive(false);
                     break;
                 }
@@ -345,7 +285,7 @@ public class BattleRoom {
 
             // Check collision with tables
             for (Table table : tables) {
-                if (fireball.isActive() && !table.isDestroyed() && fireball.getBoundingBox().intersects(table.getBoundingBox())) {
+                if (fireball.isActive() && !table.isDestroyed() && fireball.intersects(table.getBoundingBox())) {
                     table.destroy();
                     fireball.setActive(false);
                     break;
@@ -366,34 +306,10 @@ public class BattleRoom {
         fireballs.removeAll(fireballsToRemove);
     }
 
-    private boolean stopUpdatingEarlyIfNeeded() {
-        if (stopCurrentUpdateCall) {
-            player = null;
-            stopCurrentUpdateCall = false;
-            return true;
-        }
-        return false;
-    }
-
-    public void stopCurrentUpdateCall() {
-        stopCurrentUpdateCall = true;
-    }
-
-    public void setPlayer(Player player) {
-        this.player = player;
-    }
-
-    public Door findDoorByDestination(String roomName) {
-        if (primaryDoor.toRoomName.equals(roomName)) {
-            return primaryDoor;
-        } else {
-            return secondaryDoor;
-        }
-    }
-
     private void unlockAllDoors() {
-        primaryDoor.unlock(false);
-        secondaryDoor.unlock(false);
+        for (Door door : doors) {
+            door.unlock(false);
+        }
     }
 
     public boolean isComplete() {
@@ -405,32 +321,17 @@ public class BattleRoom {
     }
 
     public void activateEnemies() {
-        keyBulletKin.setActive(true);
-        for (BulletKin bulletKin : bulletKins) {
-            bulletKin.setActive(true);
-        }
-        for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
-            ashenBulletKin.setActive(true);
+        for (Enemy enemy : enemies) {
+            enemy.setActive(true);
         }
     }
 
-    public boolean noMoreEnemies() {
-        boolean allBulletKinsDead = true;
-        for (BulletKin bulletKin : bulletKins) {
-            if (!bulletKin.isDead()) {
-                allBulletKinsDead = false;
-                break;
+    public boolean areAllEnemiesDefeated() {
+        for (Enemy enemy : enemies) {
+            if (!enemy.isDefeated()) {
+                return false;
             }
         }
-
-        boolean allAshenBulletKinsDead = true;
-        for (AshenBulletKin ashenBulletKin : ashenBulletKins) {
-            if (!ashenBulletKin.isDead()) {
-                allAshenBulletKinsDead = false;
-                break;
-            }
-        }
-
-        return keyBulletKin.isDead() && allBulletKinsDead && allAshenBulletKinsDead;
+        return true;
     }
 }

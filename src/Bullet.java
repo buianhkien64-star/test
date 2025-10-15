@@ -1,28 +1,23 @@
 import bagel.Image;
 import bagel.Window;
 import bagel.util.Point;
-import bagel.util.Rectangle;
 
 /**
  * Bullet fired by the player towards enemies
  */
-public class Bullet {
-    private Point position;
-    private final Image image;
+public class Bullet extends GameEntity {
     private final double velocityX;
     private final double velocityY;
     private final int damage;
-    private boolean active = true;
 
     private static final Image BULLET_IMAGE = new Image("res/bullet.png");
 
     public Bullet(Point startPos, Point targetPos, int damage) {
-        this.position = startPos;
-        this.image = BULLET_IMAGE;
+        super(startPos, BULLET_IMAGE);
         this.damage = damage;
 
         // Calculate velocity towards target
-        double speed = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("bulletSpeed"));
+        double speed = GameConstants.BULLET_SPEED;
         double dx = targetPos.x - startPos.x;
         double dy = targetPos.y - startPos.y;
         double distance = Math.sqrt(dx * dx + dy * dy);
@@ -32,6 +27,7 @@ public class Bullet {
         this.velocityY = (dy / distance) * speed;
     }
 
+    @Override
     public void update() {
         if (!active) {
             return;
@@ -47,29 +43,7 @@ public class Bullet {
         }
     }
 
-    public void draw() {
-        if (active) {
-            image.draw(position.x, position.y);
-        }
-    }
-
-    public Rectangle getBoundingBox() {
-        return image.getBoundingBoxAt(position);
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
     public int getDamage() {
         return damage;
-    }
-
-    public Point getPosition() {
-        return position;
     }
 }

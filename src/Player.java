@@ -33,8 +33,8 @@ public class Player {
     public Player(Point position) {
         this.position = position;
         this.currImage = DEFAULT_RIGHT;
-        this.speed = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("movingSpeed"));
-        this.health = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("initialHealth"));
+        this.speed = GameConstants.PLAYER_MOVING_SPEED;
+        this.health = GameConstants.INITIAL_HEALTH;
     }
 
     public void update(Input input) {
@@ -81,7 +81,7 @@ public class Player {
             return null;
         }
 
-        int bulletFreq = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("bulletFreq"));
+        int bulletFreq = GameConstants.BULLET_FREQ;
 
         // Check if enough frames have passed since last shot
         if (framesSinceLastShot >= bulletFreq) {

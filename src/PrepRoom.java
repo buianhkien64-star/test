@@ -5,28 +5,31 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Room where the game starts
+ * Room where the game starts - handles character selection
  */
-public class PrepRoom {
-    private Player player;
-    private Door door;
+public class PrepRoom extends GameRoom {
     private RestartArea restartArea;
     private CharacterSprite robotSprite;
     private CharacterSprite marineSprite;
-    private boolean stopCurrentUpdateCall = false; // this determines whether to prematurely stop the update execution
 
+    public PrepRoom() {
+        super(ShadowDungeon.PREP_ROOM_NAME);
+    }
+
+    @Override
     public void initEntities(Properties gameProperties) {
-        // find the configuration of game objects for this room
+        // Parse configuration for this room
         for (Map.Entry<Object, Object> entry: gameProperties.entrySet()) {
-            String roomSuffix = String.format(".%s", ShadowDungeon.PREP_ROOM_NAME);
+            String roomSuffix = String.format(".%s", roomId);
             if (entry.getKey().toString().contains(roomSuffix)) {
-                String objectType = entry.getKey().toString().substring(0, entry.getKey().toString().length() - roomSuffix.length());
+                String objectType = entry.getKey().toString()
+                        .substring(0, entry.getKey().toString().length() - roomSuffix.length());
                 String propertyValue = entry.getValue().toString();
 
                 switch (objectType) {
                     case "door":
                         String[] coordinates = propertyValue.split(",");
-                        door = new Door(IOUtils.parseCoords(propertyValue), coordinates[2]);
+                        doors.add(new Door(IOUtils.parseCoords(propertyValue), coordinates[2]));
                         break;
                     case "restartarea":
                         restartArea = new RestartArea(IOUtils.parseCoords(propertyValue));
@@ -41,6 +44,7 @@ public class PrepRoom {
         marineSprite = new CharacterSprite(IOUtils.parseCoords(gameProperties.getProperty("Marine")), "res/marine_sprite.png");
     }
 
+    @Override
     public void update(Input input) {
         UserInterface.drawStartMessages();
         UserInterface.drawCharacterDescriptions();
@@ -49,11 +53,13 @@ public class PrepRoom {
         robotSprite.draw();
         marineSprite.draw();
 
-        // update and draw all game objects in this room
-        door.update(player);
-        door.draw();
-        if (stopUpdatingEarlyIfNeeded()) {
-            return;
+        // Update and draw door
+        for (Door door : doors) {
+            door.update(player);
+            door.draw();
+            if (stopUpdatingEarlyIfNeeded()) {
+                return;
+            }
         }
 
         restartArea.update(input, player);
@@ -64,14 +70,14 @@ public class PrepRoom {
             if (input.wasPressed(Keys.R)) {
                 player.setPlayerType(PlayerType.ROBOT);
                 // Unlock door after character selection
-                if (!findDoor().isUnlocked()) {
-                    findDoor().unlock(false);
+                if (!doors.isEmpty() && !doors.get(0).isUnlocked()) {
+                    doors.get(0).unlock(false);
                 }
             } else if (input.wasPressed(Keys.M)) {
                 player.setPlayerType(PlayerType.MARINE);
                 // Unlock door after character selection
-                if (!findDoor().isUnlocked()) {
-                    findDoor().unlock(false);
+                if (!doors.isEmpty() && !doors.get(0).isUnlocked()) {
+                    doors.get(0).unlock(false);
                 }
             }
 
@@ -87,28 +93,7 @@ public class PrepRoom {
         }
     }
 
-    private boolean stopUpdatingEarlyIfNeeded() {
-        if (stopCurrentUpdateCall) {
-            player = null;
-            stopCurrentUpdateCall = false;
-            return true;
-        }
-        return false;
-    }
-
-    public void setPlayer(Player player) {
-        this.player = player;
-    }
-
-    public void stopCurrentUpdateCall() {
-        stopCurrentUpdateCall = true;
-    }
-
     public Door findDoor() {
-        return door;
-    }
-
-    public Door findDoorByDestination() {
-        return door;
+        return doors.isEmpty() ? null : doors.get(0);
     }
 }

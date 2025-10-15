@@ -41,6 +41,9 @@ public class ShadowDungeon extends AbstractGame {
     }
 
     public static void resetGameState(Properties gameProps) {
+        // Initialize game constants
+        GameConstants.init();
+
         prepRoom = new PrepRoom();
         battleRoomA = new BattleRoom(BATTLE_ROOM_A_NAME, BATTLE_ROOM_B_NAME);
         battleRoomB = new BattleRoom(BATTLE_ROOM_B_NAME, END_ROOM_NAME);

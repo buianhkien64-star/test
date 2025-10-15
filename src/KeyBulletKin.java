@@ -1,113 +1,74 @@
 import bagel.Image;
 import bagel.util.Point;
+
 import java.util.ArrayList;
 
 /**
- * Enemy that moves along a predefined path and gets removed when the player overlaps with it
+ * Moving enemy that follows a predefined path and drops a key when defeated
  */
-public class KeyBulletKin {
-    private Point position;
-    private final Image image;
-    private boolean active = false; // only true when the Battle Room has been activated
-    private boolean dead = false;
-    private int health;
-    private final ArrayList<Point> movementPath;
-    private int currentTargetIndex = 1; // Start moving towards the second point
+public class KeyBulletKin extends Enemy {
+    private ArrayList<Point> movementPath;
+    private int currentPathIndex = 0;
     private final double speed;
     private boolean keyDropped = false;
 
-    public KeyBulletKin(String pathString) {
-        this.image = new Image("res/key_bullet_kin.png");
-        this.movementPath = new ArrayList<>();
-        this.speed = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("keyBulletKinSpeed"));
-        this.health = Integer.parseInt(ShadowDungeon.getGameProps().getProperty("keyBulletKinHealth"));
+    public KeyBulletKin(String pathCoordinates) {
+        super(new Point(0, 0),
+              new Image("res/key_bullet_kin.png"),
+              EnemyType.KEY_BULLET_KIN,
+              GameConstants.KEY_BULLET_KIN_HEALTH,
+              0,  // KeyBulletKin doesn't shoot
+              0); // KeyBulletKin doesn't give coins directly
 
-        // Parse all points in the path
-        String[] pathPoints = pathString.split(";");
-        for (String coords : pathPoints) {
-            movementPath.add(IOUtils.parseCoords(coords));
+        this.speed = GameConstants.KEY_BULLET_KIN_SPEED;
+        this.movementPath = new ArrayList<>();
+
+        // Parse path coordinates
+        String[] waypoints = pathCoordinates.split(";");
+        for (String waypoint : waypoints) {
+            movementPath.add(IOUtils.parseCoords(waypoint));
         }
 
-        // Start at the first point
         if (!movementPath.isEmpty()) {
-            this.position = new Point(movementPath.get(0).x, movementPath.get(0).y);
+            this.position = movementPath.get(0);
+            currentPathIndex = 1; // Start moving towards second waypoint
         }
     }
 
-    public void update(Player player) {
-        if (!active || dead) {
+    @Override
+    public void update() {
+        if (!active || defeated || movementPath.isEmpty()) {
             return;
         }
 
-        // Move along the path
-        if (!movementPath.isEmpty() && currentTargetIndex < movementPath.size()) {
-            Point target = movementPath.get(currentTargetIndex);
-            double dx = target.x - position.x;
-            double dy = target.y - position.y;
-            double distance = Math.sqrt(dx * dx + dy * dy);
+        // Get current target waypoint
+        Point target = movementPath.get(currentPathIndex);
 
-            // Check if we've reached the current target
-            if (distance <= speed) {
-                // Move to the exact target position
-                position = new Point(target.x, target.y);
+        // Calculate direction to target
+        double dx = target.x - position.x;
+        double dy = target.y - position.y;
+        double distance = Math.sqrt(dx * dx + dy * dy);
 
-                // Move to next target (loop back to start if at end)
-                currentTargetIndex++;
-                if (currentTargetIndex >= movementPath.size()) {
-                    currentTargetIndex = 0;
-                }
-            } else {
-                // Move towards the target
-                double moveX = (dx / distance) * speed;
-                double moveY = (dy / distance) * speed;
-                position = new Point(position.x + moveX, position.y + moveY);
-            }
-        }
-
-        // Check collision with player
-        if (hasCollidedWith(player)) {
-            player.receiveDamage(Double.parseDouble(ShadowDungeon.getGameProps().getProperty("riverDamagePerFrame")));
+        // Move towards target if not reached
+        if (distance > speed) {
+            double moveX = (dx / distance) * speed;
+            double moveY = (dy / distance) * speed;
+            position = new Point(position.x + moveX, position.y + moveY);
+        } else {
+            // Reached waypoint, move to next one (loop back to start)
+            currentPathIndex = (currentPathIndex + 1) % movementPath.size();
         }
     }
 
-    public void takeDamage(int damage) {
-        health -= damage;
-        if (health <= 0) {
-            dead = true;
-            active = false;
-        }
+    @Override
+    public Fireball shoot(Player player) {
+        // KeyBulletKin doesn't shoot
+        return null;
     }
 
-    public void draw() {
-        image.draw(position.x, position.y);
-    }
-
-    public boolean hasCollidedWith(Player player) {
-        return image.getBoundingBoxAt(position).intersects(player.getCurrImage().getBoundingBoxAt(player.getPosition()));
-    }
-
-    public boolean isDead() {
-        return dead;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public Point getPosition() {
-        return position;
-    }
-
-    public Image getImage() {
-        return image;
-    }
-
-    public int getHealth() {
-        return health;
+    @Override
+    protected void onDeath() {
+        // Key will be dropped by BattleRoom
     }
 
     public boolean hasDroppedKey() {
@@ -115,6 +76,6 @@ public class KeyBulletKin {
     }
 
     public void setKeyDropped() {
-        keyDropped = true;
+        this.keyDropped = true;
     }
 }

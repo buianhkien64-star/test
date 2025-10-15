@@ -1,26 +1,20 @@
 import bagel.Image;
 import bagel.util.Point;
-import bagel.util.Rectangle;
 
 /**
  * Projectile fired by enemies toward the player
  */
-public class Fireball {
-    private Point position;
-    private final Image image;
+public class Fireball extends GameEntity {
     private final double velocityX;
     private final double velocityY;
     private final double damage;
-    private boolean active = true;
-    private final double speed;
 
     public Fireball(Point startPos, Point targetPos) {
-        this.position = startPos;
-        this.image = new Image("res/fireball.png");
-        this.speed = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("fireballSpeed"));
-        this.damage = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("fireballDamage"));
+        super(startPos, new Image("res/fireball.png"));
+        this.damage = GameConstants.FIREBALL_DAMAGE;
 
         // Calculate velocity towards target (player position)
+        double speed = GameConstants.FIREBALL_SPEED;
         double dx = targetPos.x - startPos.x;
         double dy = targetPos.y - startPos.y;
         double distance = Math.sqrt(dx * dx + dy * dy);
@@ -30,6 +24,7 @@ public class Fireball {
         this.velocityY = (dy / distance) * speed;
     }
 
+    @Override
     public void update() {
         if (!active) {
             return;
@@ -45,29 +40,7 @@ public class Fireball {
         }
     }
 
-    public void draw() {
-        if (active) {
-            image.draw(position.x, position.y);
-        }
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public Rectangle getBoundingBox() {
-        return image.getBoundingBoxAt(position);
-    }
-
     public double getDamage() {
         return damage;
-    }
-
-    public Point getPosition() {
-        return position;
     }
 }

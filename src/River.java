@@ -12,7 +12,7 @@ public class River{
     public River(Point position) {
         this.position = position;
         this.image = new Image("res/river.png");
-        damagePerFrame = Double.parseDouble(ShadowDungeon.getGameProps().getProperty("riverDamagePerFrame"));
+        damagePerFrame = GameConstants.RIVER_DAMAGE_PER_FRAME;
     }
 
     public void update(Player player) {
